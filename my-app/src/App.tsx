@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect, useMemo, useCallback } from "react";
+import ReactMarkdown from "react-markdown";
 
 /* ───────────── Types ───────────── */
 
@@ -503,9 +504,9 @@ function BiasPanel({ ranges }: { ranges: Range[] }) {
 
 function BiasMetric({
   label,
-  description,
   value,
   displayValue,
+  description,
   color,
   invert,
 }: {
@@ -746,13 +747,26 @@ function useClaudeQuery() {
     setLoading(true);
     setError("");
     setResponse("");
-    const prompt = `Here are two lists of items:\n\nFirst List:\n${
-      listA.length > 0 ? listA.map((v) => `- ${v}`).join("\n") : "(empty)"
-    }\n\nSecond List:\n${
-      listB.length > 0 ? listB.map((v) => `- ${v}`).join("\n") : "(empty)"
-    }\n\nPlease analyze these two lists and provide a helpful response.`;
+    const prompt = `Evaluate the following survey questions:
+
+    ${
+      listA.length > 0
+        ? listA.map((v, i) => `${i + 1}. ${v}`).join("\n")
+        : "(no questions provided)"
+    }
+    
+    I am trying to test my survey to make sure I'm evaluating for the following objectives:
+    
+    ${
+      listB.length > 0
+        ? listB.map((v, i) => `${i + 1}. ${v}`).join("\n")
+        : "(no objectives provided)"
+    }
+    
+    Tell me if my questions are effective enough to test for these objectives, or if there are other questions I could use to get to the point better.
+    Don't give me tables in response, I can't format them.`;
     try {
-      const res = await fetch("http://localhost:3001/api/claude", {
+      const res = await fetch("/api/claude", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -811,13 +825,14 @@ export default function App() {
               onClick={() => setPage(p)}
               style={{ ...navBtn, ...(page === p ? navBtnActive : {}) }}
             >
-              Page {p}
+              Part {p}
             </button>
           ))}
         </nav>
 
         {page === 1 && (
           <>
+            <h2>Bias Simulator</h2>
             {SLIDERS.map((s, i) => (
               <DualSlider
                 key={s.label}
@@ -835,13 +850,14 @@ export default function App() {
 
         {page === 2 && (
           <>
+            <h2>Objective Evaluator</h2>
             <MultiAddField
-              label="First List"
+              label="List of Questions"
               values={listA}
               setValues={setListA}
             />
             <MultiAddField
-              label="Second List"
+              label="List of KPIs"
               values={listB}
               setValues={setListB}
             />
@@ -883,22 +899,27 @@ export default function App() {
             {response && (
               <div style={responseBox}>
                 <p style={responseLabel}>Claude's Response</p>
-                <p
+                <div
                   style={{
                     color: "#e2e8f0",
                     lineHeight: 1.7,
                     margin: 0,
-                    whiteSpace: "pre-wrap",
+                    fontFamily: "monospace",
                   }}
                 >
-                  {response}
-                </p>
+                  <ReactMarkdown>{response}</ReactMarkdown>
+                </div>
               </div>
             )}
           </>
         )}
 
-        {page === 3 && <Dashboard />}
+        {page === 3 && (
+          <>
+            <h2>Calculation Load Test</h2>
+            <Dashboard />
+          </>
+        )}
       </div>
     </div>
   );

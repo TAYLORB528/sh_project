@@ -269,6 +269,9 @@ app.get("/api/stats", async (_req, res) => {
 });
 
 app.post("/api/claude", async (req, res) => {
+  const key = process.env.VITE_ANTHROPIC_API_KEY ?? "";
+  console.log("API key length:", key.length);
+  console.log("API key start:", key.slice(0, 10));
   try {
     const response = await axios.post(
       "https://api.anthropic.com/v1/messages",
